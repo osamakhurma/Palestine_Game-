@@ -1,3 +1,4 @@
+import os
 from flask import Flask, render_template, jsonify
 import random
 
@@ -39,4 +40,6 @@ def next_question():
     return jsonify({"city": next_city["name"]})
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    # استماع إلى المنفذ المحدد من Render
+    port = int(os.environ.get("PORT", 5000))  # إذا لم يتم تحديد المنفذ، سيستخدم 5000
+    app.run(host="0.0.0.0", port=port)
