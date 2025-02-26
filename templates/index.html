@@ -27,7 +27,7 @@
     <p id="question">أين تقع <span id="current-location"></span>؟</p>
 
     <div class="map-container">
-        <img src="{{ url_for('static', filename='map.png') }}" class="map">
+        <img src="{{ url_for('static', filename='213.png') }}" class="map">
         <div id="message-box" class="message-box"></div>
     </div>
 
@@ -43,7 +43,7 @@
         }
 
         function fetchQuestion() {
-            fetch(`/get_question/${level}`)
+            fetch(`/get_question`)
                 .then(response => response.json())
                 .then(data => {
                     currentQuestion = data;
