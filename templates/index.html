@@ -41,24 +41,41 @@
     </div>
 
     <script>
+        const points = [
+            {"name": "حيفا", "x": 238, "y": 139},
+            {"name": "عكا", "x": 257, "y": 114},
+            {"name": "يافا", "x": 199, "y": 312},
+            {"name": "غزة", "x": 143, "y": 422},
+            {"name": "رفح", "x": 108, "y": 479},
+            {"name": "بئر السبع", "x": 200, "y": 489},
+            {"name": "صفد", "x": 337, "y": 100},
+            {"name": "طبريا", "x": 343, "y": 152},
+            {"name": "بيسان", "x": 338, "y": 201},
+            {"name": "الناصرة", "x": 295, "y": 161},
+            {"name": "جنين", "x": 302, "y": 206},
+            {"name": "نابلس", "x": 294, "y": 261},
+            {"name": "أريحا", "x": 326, "y": 349},
+            {"name": "رام الله", "x": 282, "y": 345},
+            {"name": "القدس", "x": 286, "y": 370},
+            {"name": "بيت لحم", "x": 281, "y": 385},
+            {"name": "الخليل", "x": 248, "y": 425}
+        ];
+
         let level = 1; 
         let score = 0;
         let timeLeft = 60;
         let currentQuestion = {};
 
         function startGame() {
+            displayAllPoints();  // عرض جميع النقاط من البداية
             fetchQuestion();
             startTimer();
         }
 
-        function fetchQuestion() {
-            fetch(`/get_question`)
-                .then(response => response.json())
-                .then(data => {
-                    currentQuestion = data;
-                    document.getElementById("current-location").innerText = data.name;
-                    addClickablePoint(data.x, data.y); // إضافة النقطة القابلة للنقر
-                });
+        function displayAllPoints() {
+            points.forEach(point => {
+                addClickablePoint(point.x, point.y);
+            });
         }
 
         // إضافة النقطة القابلة للنقر على الخريطة
@@ -69,6 +86,15 @@
             clickablePoint.style.top = `${y}px`;
             clickablePoint.addEventListener("click", () => checkAnswer(x, y));
             document.querySelector(".map-container").appendChild(clickablePoint);
+        }
+
+        function fetchQuestion() {
+            fetch(`/get_question`)
+                .then(response => response.json())
+                .then(data => {
+                    currentQuestion = data;
+                    document.getElementById("current-location").innerText = data.name;
+                });
         }
 
         function checkAnswer(user_x, user_y) {
