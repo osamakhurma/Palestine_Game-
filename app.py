@@ -1,47 +1,68 @@
-from flask import Flask, render_template, jsonify
+from flask import Flask, render_template, request, jsonify, redirect, url_for
 import random
 
 app = Flask(__name__)
 
-# بيانات المحافظات
-provinces = [
-    {"name": "الخليل", "x": 248, "y": 425},
-    {"name": "رام الله", "x": 282, "y": 345},
-    {"name": "القدس", "x": 286, "y": 370},
-    {"name": "نابلس", "x": 294, "y": 261},
-    {"name": "جنين", "x": 302, "y": 206},
-    {"name": "طولكرم", "x": 270, "y": 230},
-    {"name": "قلقيلية", "x": 260, "y": 250},
-    {"name": "سلفيت", "x": 275, "y": 270},
-    {"name": "طوباس", "x": 310, "y": 220},
-    {"name": "أريحا", "x": 326, "y": 349},
-]
+# البيانات: المحافظات والمدن
+provinces = {
+    "شمال": [(257, 114, "عكا"), (238, 139, "حيفا"), (337, 100, "صفد"), (343, 152, "طبريا"), (338, 201, "بيسان"), (295, 161, "الناصرة"), (302, 206, "جنين")],
+    "وسط": [(294, 261, "نابلس"), (282, 345, "رام الله"), (286, 370, "القدس"), (326, 349, "أريحا")],
+    "جنوب": [(281, 385, "بيت لحم"), (248, 425, "الخليل"), (143, 422, "غزة"), (108, 479, "رفح"), (200, 489, "بئر السبع")]
+}
 
-# بيانات المدن (المرحلة الثانية)
-cities = [
-    {"name": "حيفا", "x": 238, "y": 139},
-    {"name": "يافا", "x": 199, "y": 312},
-    {"name": "غزة", "x": 143, "y": 422},
-    {"name": "رفح", "x": 108, "y": 479},
-    {"name": "بئر السبع", "x": 200, "y": 489},
-    {"name": "صفد", "x": 337, "y": 100},
-    {"name": "طبريا", "x": 343, "y": 152},
-    {"name": "بيسان", "x": 338, "y": 201},
-    {"name": "الناصرة", "x": 295, "y": 161},
-    {"name": "عكا", "x": 257, "y": 114},
-]
+all_cities = [city for region in provinces.values() for city in region]
+
+# حالة اللعبة
+current_phase = "provinces"
+questions_answered = 0
+score = 0
+current_city = None
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    global current_phase, questions_answered, score, current_city
+    current_phase = "provinces"
+    questions_answered = 0
+    score = 0
+    current_city = None
+    return render_template('index.html', phase=current_phase, score=score)
 
-@app.route('/get_question/<int:level>')
-def get_question(level):
-    if level == 1:
-        question_data = random.choice(provinces)
+@app.route('/next_question', methods=['POST'])
+def next_question():
+    global current_city, questions_answered, current_phase
+    
+    if current_phase == "provinces":
+        choices = random.choice(list(provinces.values()))
     else:
-        question_data = random.choice(cities)
-    return jsonify(question_data)
+        choices = all_cities
+    
+    current_city = random.choice(choices)
+    return jsonify({"question": f"أين تقع {current_city[2]}؟"})
+
+@app.route('/check_answer', methods=['POST'])
+def check_answer():
+    global questions_answered, score, current_phase
+    
+    data = request.get_json()
+    x, y = data['x'], data['y']
+    
+    correct_x, correct_y, city_name = current_city
+    
+    distance = ((correct_x - x) ** 2 + (correct_y - y) ** 2) ** 0.5
+    if distance < 20:
+        score += 1
+    
+    questions_answered += 1
+    
+    if questions_answered == 10:
+        if current_phase == "provinces":
+            current_phase = "cities"
+            questions_answered = 0
+            return jsonify({"result": "next_phase"})
+        else:
+            return jsonify({"result": "game_over", "score": score})
+    
+    return jsonify({"result": "continue", "score": score})
 
 if __name__ == '__main__':
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(debug=True)
