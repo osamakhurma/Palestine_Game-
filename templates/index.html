@@ -19,6 +19,14 @@
             border-radius: 10px;
             display: none;
         }
+        .clicked-point {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background-color: red;
+            transform: translate(-50%, -50%);
+        }
     </style>
 </head>
 <body>
@@ -56,7 +64,15 @@
             const x = event.clientX - rect.left;
             const y = event.clientY - rect.top;
 
+            // حساب المسافة بين النقر والإجابة الصحيحة
             const distance = Math.sqrt(Math.pow(x - currentQuestion.x, 2) + Math.pow(y - currentQuestion.y, 2));
+
+            // إضافة نقطة صغيرة في المكان الذي نقر عليه اللاعب
+            const clickedPoint = document.createElement("div");
+            clickedPoint.classList.add("clicked-point");
+            clickedPoint.style.left = `${x}px`;
+            clickedPoint.style.top = `${y}px`;
+            document.querySelector(".map-container").appendChild(clickedPoint);
 
             if (distance < 20) { 
                 score++;
