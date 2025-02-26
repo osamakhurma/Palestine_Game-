@@ -101,6 +101,9 @@
             // حساب المسافة بين النقطة التي نقر عليها والإجابة الصحيحة
             const distance = Math.sqrt(Math.pow(user_x - currentQuestion.x, 2) + Math.pow(user_y - currentQuestion.y, 2));
 
+            // إذا كانت الإجابة صحيحة أو خاطئة، نغير السؤال
+            fetchQuestion();
+
             if (distance < 20) { 
                 score++;
                 document.getElementById("score").innerText = `${score}/10`;
@@ -115,8 +118,6 @@
                         location.reload();
                     }
                 }
-
-                fetchQuestion();
             }
         }
 
