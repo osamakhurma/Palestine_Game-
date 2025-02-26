@@ -50,7 +50,13 @@ def get_question():
         questions = random.sample(data, len(data))
     
     question = questions.pop()
-    return jsonify(question)
+    
+    # إرسال الإحداثيات بشكل دقيق
+    return jsonify({
+        "name": question["name"],
+        "x": question["x"],
+        "y": question["y"]
+    })
 
 @app.route('/submit_answer', methods=['POST'])
 def submit_answer():
@@ -78,4 +84,3 @@ def submit_answer():
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port, debug=True)
-    
