@@ -19,13 +19,14 @@
             border-radius: 10px;
             display: none;
         }
-        .clicked-point {
+        .clickable-point {
             position: absolute;
             width: 20px;
             height: 20px;
             border-radius: 50%;
-            background-color: red;
+            background-color: blue;
             transform: translate(-50%, -50%);
+            cursor: pointer;
         }
     </style>
 </head>
@@ -35,7 +36,7 @@
     <p id="question">أين تقع <span id="current-location"></span>؟</p>
 
     <div class="map-container">
-        <img src="{{ url_for('static', filename='213.png') }}" class="map">
+        <img src="{{ url_for('static', filename='213.png') }}" class="map" id="map">
         <div id="message-box" class="message-box"></div>
     </div>
 
@@ -56,23 +57,23 @@
                 .then(data => {
                     currentQuestion = data;
                     document.getElementById("current-location").innerText = data.name;
+                    addClickablePoint(data.x, data.y); // إضافة النقطة القابلة للنقر
                 });
         }
 
-        function checkAnswer(event) {
-            const rect = event.target.getBoundingClientRect();
-            const x = event.clientX - rect.left;
-            const y = event.clientY - rect.top;
+        // إضافة النقطة القابلة للنقر على الخريطة
+        function addClickablePoint(x, y) {
+            const clickablePoint = document.createElement("div");
+            clickablePoint.classList.add("clickable-point");
+            clickablePoint.style.left = `${x}px`;
+            clickablePoint.style.top = `${y}px`;
+            clickablePoint.addEventListener("click", () => checkAnswer(x, y));
+            document.querySelector(".map-container").appendChild(clickablePoint);
+        }
 
-            // حساب المسافة بين النقر والإجابة الصحيحة
-            const distance = Math.sqrt(Math.pow(x - currentQuestion.x, 2) + Math.pow(y - currentQuestion.y, 2));
-
-            // إضافة نقطة صغيرة في المكان الذي نقر عليه اللاعب
-            const clickedPoint = document.createElement("div");
-            clickedPoint.classList.add("clicked-point");
-            clickedPoint.style.left = `${x}px`;
-            clickedPoint.style.top = `${y}px`;
-            document.querySelector(".map-container").appendChild(clickedPoint);
+        function checkAnswer(user_x, user_y) {
+            // حساب المسافة بين النقطة التي نقر عليها والإجابة الصحيحة
+            const distance = Math.sqrt(Math.pow(user_x - currentQuestion.x, 2) + Math.pow(user_y - currentQuestion.y, 2));
 
             if (distance < 20) { 
                 score++;
@@ -106,7 +107,6 @@
             }, 1000);
         }
 
-        document.querySelector(".map").addEventListener("click", checkAnswer);
         window.onload = startGame;
     </script>
 </body>
