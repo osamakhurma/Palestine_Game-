@@ -31,8 +31,13 @@
         }
         #timer, #score {
             font-weight: bold;
-            color: #e74c3c;
             font-size: 1.2em;
+        }
+        #timer {
+            color: #e74c3c;
+        }
+        #score {
+            color: #27ae60;
         }
         .clickable-point {
             position: absolute;
@@ -44,10 +49,8 @@
             cursor: pointer;
             transition: transform 0.2s, background-color 0.2s;
         }
-        .clickable-point:hover {
-            transform: scale(1.2);
-            background-color: #e74c3c;
-        }
+        .correct { background-color: #27ae60 !important; } /* أخضر */
+        .wrong { background-color: #e74c3c !important; } /* أحمر */
         .message-box {
             position: absolute;
             top: 50%;
@@ -79,14 +82,16 @@
     <audio id="background-music" src="{{ url_for('static', filename='background-royalty-free-music-emotional-piano-305670.mp3') }}" loop></audio>
 
     <script>
-        let level = 1; 
         let score = 0;
         let timeLeft = 60;
         let currentQuestion = {};
 
         const points = [
-            {"name": "حيفا", "x": 238, "y": 139, "info": "حيفا هي مدينة ساحلية تقع على البحر المتوسط."},
-            {"name": "عكا", "x": 257, "y": 114, "info": "عكا هي مدينة تاريخية ذات أهمية سياحية كبيرة."},
+            { "name": "حيفا", "x": 238, "y": 139 },
+            { "name": "عكا", "x": 257, "y": 114 },
+            { "name": "القدس", "x": 282, "y": 368 },
+            { "name": "نابلس", "x": 293, "y": 259 },
+            { "name": "الخليل", "x": 249, "y": 428 },
         ];
 
         function startGame() {
@@ -105,25 +110,17 @@
                 });
         }
 
-        function checkAnswer(user_x, user_y) {
+        function checkAnswer(user_x, user_y, pointElement) {
             const distance = Math.sqrt(Math.pow(user_x - currentQuestion.x, 2) + Math.pow(user_y - currentQuestion.y, 2));
 
             if (distance < 20) { 
                 score++;
-                document.getElementById("score").innerText = `${score}`;
-                showMessage("🎉 أحسنت! إجابة صحيحة", "#2ecc71");
+                document.getElementById("score").innerText = score;
+                pointElement.classList.add("correct");
                 playSound("correct-sound");
-
-                if (level === 1 && score === 5) {
-                    level = 2;
-                } else if (level === 2 && score === 10) {
-                    showMessage("🎉 تهانينا! أكملت اللعبة بنجاح!", "#3498db");
-                    setTimeout(() => location.reload(), 3000);
-                }
-
                 fetchQuestion();
             } else {
-                showMessage("❌ حاول مرة أخرى!", "#e74c3c");
+                pointElement.classList.add("wrong");
                 playSound("wrong-sound");
             }
         }
@@ -147,22 +144,23 @@
                 clickablePoint.classList.add("clickable-point");
                 clickablePoint.style.left = `${point.x}px`;
                 clickablePoint.style.top = `${point.y}px`;
-                clickablePoint.addEventListener("click", () => {
-                    checkAnswer(point.x, point.y);
-                    showMessage(point.info, "#3498db");
+                clickablePoint.dataset.x = point.x;
+                clickablePoint.dataset.y = point.y;
+
+                clickablePoint.addEventListener("click", function () {
+                    checkAnswer(point.x, point.y, this);
                 });
+
                 document.querySelector(".map-container").appendChild(clickablePoint);
             });
         }
 
         function playBackgroundMusic() {
-            const backgroundMusic = document.getElementById("background-music");
-            backgroundMusic.play();
+            document.getElementById("background-music").play();
         }
 
         function playSound(soundId) {
-            const sound = document.getElementById(soundId);
-            sound.play();
+            document.getElementById(soundId).play();
         }
 
         function showMessage(message, color) {
