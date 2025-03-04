@@ -110,12 +110,12 @@
                 playSound("correct-sound");
                 element.style.backgroundColor = "green";
                 if (score % 5 === 0) level++;
+                fetchQuestion();
             } else {
                 showMessage("❌ حاول مرة أخرى!", "#e74c3c");
                 playSound("wrong-sound");
                 element.style.backgroundColor = "red";
             }
-            fetchQuestion();
         }
 
         function startTimer() {
