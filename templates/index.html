@@ -5,123 +5,117 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>لعبة مدن ومحافظات فلسطين</title>
     <style>
-        body { text-align: center; font-family: Arial, sans-serif; }
-        #map-container { position: relative; display: inline-block; }
-        .dot {
-            position: absolute;
-            width: 15px;
-            height: 15px;
-            background-color: blue;
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            direction: rtl;
+        }
+        .map-container {
+            position: relative;
+            display: inline-block;
+        }
+        .city-point {
+            width: 12px;
+            height: 12px;
             border-radius: 50%;
+            position: absolute;
+            transform: translate(-50%, -50%);
+            background-color: blue;
             cursor: pointer;
         }
+        .correct { background-color: green !important; }
+        .wrong { background-color: red !important; }
     </style>
 </head>
 <body>
-    <h1>لعبة مدن ومحافظات فلسطين</h1>
-    <p id="info">الوقت: <span id="timer">30</span> ثانية | النقاط: <span id="score">0</span></p>
-    <p id="question">أين تقع؟</p>
-    <div id="map-container">
-        <img src="213.png" id="map" width="400">
-    </div>
-    <audio id="background-music" src="background-royalty-free-music-emotional-piano-305670.mp3" loop autoplay></audio>
-    <audio id="correct-sound" src="correct-6033.mp3"></audio>
-    <audio id="wrong-sound" src="wrong-47985.mp3"></audio>
-    
-    <script>
-        const provinces = [
-            { name: "حيفا", x: 238, y: 139 }, { name: "عكا", x: 257, y: 114 },
-            { name: "يافا", x: 199, y: 312 }, { name: "غزة", x: 143, y: 422 },
-            { name: "رفح", x: 108, y: 479 }, { name: "بئر السبع", x: 200, y: 489 },
-            { name: "صفد", x: 337, y: 100 }, { name: "طبريا", x: 343, y: 152 },
-            { name: "بيسان", x: 338, y: 201 }, { name: "الناصرة", x: 295, y: 161 }
-        ];
-        
-        const cities = [
-            { name: "جنين", x: 302, y: 206 }, { name: "نابلس", x: 294, y: 261 },
-            { name: "أريحا", x: 326, y: 349 }, { name: "رام الله", x: 282, y: 345 },
-            { name: "القدس", x: 286, y: 370 }, { name: "بيت لحم", x: 281, y: 385 },
-            { name: "الخليل", x: 248, y: 425 }
-        ];
 
-        let stage = 1;
-        let questions = [...cities];
+    <h2>لعبة مدن ومحافظات فلسطين</h2>
+    <p><strong>الوقت:</strong> <span id="timer">30</span> ثانية ⏳ | <strong>النقاط:</strong> <span id="score">0</span> ✅</p>
+    <p id="question">أين تقع ؟</p>
+
+    <div class="map-container">
+        <img src="{{ url_for('static', filename='213.png') }}" alt="خريطة فلسطين" id="map">
+        <div id="points-container"></div>
+    </div>
+
+    <audio id="correctSound" src="{{ url_for('static', filename='correct-6033.mp3') }}"></audio>
+    <audio id="wrongSound" src="{{ url_for('static', filename='wrong-47985.mp3') }}"></audio>
+    <audio id="backgroundMusic" src="{{ url_for('static', filename='background-royalty-free-music-emotional-piano-305670.mp3') }}" loop autoplay></audio>
+
+    <script>
+        let questions = JSON.parse('{{ questions | tojson | safe }}');
+        let currentQuestionIndex = 0;
         let score = 0;
         let timer = 30;
-        let correctSound = document.getElementById("correct-sound");
-        let wrongSound = document.getElementById("wrong-sound");
-        let backgroundMusic = document.getElementById("background-music");
+        let interval;
+        
+        const questionElement = document.getElementById("question");
+        const scoreElement = document.getElementById("score");
+        const timerElement = document.getElementById("timer");
+        const pointsContainer = document.getElementById("points-container");
+        const correctSound = document.getElementById("correctSound");
+        const wrongSound = document.getElementById("wrongSound");
+        const backgroundMusic = document.getElementById("backgroundMusic");
 
         function startGame() {
-            timer = 30;
-            document.getElementById("score").textContent = score;
-            document.getElementById("timer").textContent = timer;
-            nextQuestion();
-            startTimer();
+            showQuestion();
+            interval = setInterval(updateTimer, 1000);
         }
 
-        function startTimer() {
-            let countdown = setInterval(() => {
-                timer--;
-                document.getElementById("timer").textContent = timer;
-                if (timer <= 0) {
-                    clearInterval(countdown);
-                    alert("انتهى الوقت!");
-                    location.reload();
-                }
-            }, 1000);
-        }
-
-        function nextQuestion() {
-            if (questions.length === 0) {
-                if (stage === 1) {
-                    stage = 2;
-                    questions = [...provinces];
-                    score = 0;
-                    startGame();
-                } else {
-                    alert("لقد أنهيت اللعبة!");
-                    location.reload();
-                }
+        function showQuestion() {
+            if (currentQuestionIndex >= questions.length) {
+                alert("انتهت اللعبة!");
+                clearInterval(interval);
                 return;
             }
-            let index = Math.floor(Math.random() * questions.length);
-            let question = questions[index];
-            questions.splice(index, 1);
-            document.getElementById("question").textContent = `أين تقع ${question.name}؟`;
-            generateMapDots(question);
+            
+            let question = questions[currentQuestionIndex];
+            questionElement.textContent = `أين تقع ${question.name}؟`;
         }
 
-        function generateMapDots(question) {
-            let mapContainer = document.getElementById("map-container");
-            mapContainer.innerHTML = '<img src="213.png" id="map" width="400">';
-            [...provinces, ...cities].forEach(loc => {
-                let dot = document.createElement("div");
-                dot.className = "dot";
-                dot.style.left = `${loc.x / 2}px`;
-                dot.style.top = `${loc.y / 2}px`;
-                dot.onclick = () => checkAnswer(loc, question, dot);
-                mapContainer.appendChild(dot);
-            });
+        function updateTimer() {
+            timer--;
+            timerElement.textContent = timer;
+            if (timer <= 0) {
+                alert("انتهى الوقت!");
+                clearInterval(interval);
+            }
         }
 
-        function checkAnswer(selected, correct, dot) {
-            if (selected.name === correct.name) {
-                dot.style.backgroundColor = "green";
+        function handleAnswer(x, y) {
+            let question = questions[currentQuestionIndex];
+            let point = document.createElement("div");
+            point.classList.add("city-point");
+            point.style.left = `${x}px`;
+            point.style.top = `${y}px`;
+            pointsContainer.appendChild(point);
+
+            if (Math.abs(x - question.x) < 15 && Math.abs(y - question.y) < 15) {
+                point.classList.add("correct");
                 correctSound.play();
                 score++;
+                scoreElement.textContent = score;
             } else {
-                dot.style.backgroundColor = "red";
+                point.classList.add("wrong");
                 wrongSound.play();
             }
-            document.getElementById("score").textContent = score;
+
+            currentQuestionIndex++;
             setTimeout(() => {
-                dot.style.backgroundColor = "blue";
-                nextQuestion();
+                point.remove();
+                showQuestion();
             }, 1000);
         }
+
+        document.getElementById("map").addEventListener("click", function(event) {
+            let rect = this.getBoundingClientRect();
+            let x = event.clientX - rect.left;
+            let y = event.clientY - rect.top;
+            handleAnswer(x, y);
+        });
 
         startGame();
     </script>
+
 </body>
 </html>
