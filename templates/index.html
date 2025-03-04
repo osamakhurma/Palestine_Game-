@@ -5,142 +5,123 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>لعبة مدن ومحافظات فلسطين</title>
     <style>
-        body {
-            text-align: center;
-            font-family: 'Cairo', sans-serif;
-            direction: rtl;
-            background-color: #f0f4f8;
-            margin: 0;
-            padding: 0;
-        }
-        h1 {
-            color: #2c3e50;
-            margin-top: 20px;
-        }
-        .map-container {
-            position: relative;
-            display: inline-block;
-            margin-top: 20px;
-        }
-        .map {
-            width: 486px;
-            height: 900px;
-            border: 2px solid #2c3e50;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-        }
-        #timer, #score {
-            font-weight: bold;
-            color: #e74c3c;
-            font-size: 1.2em;
-        }
-        .clickable-point {
+        body { text-align: center; font-family: Arial, sans-serif; }
+        #map-container { position: relative; display: inline-block; }
+        .dot {
             position: absolute;
-            width: 20px;
-            height: 20px;
+            width: 15px;
+            height: 15px;
+            background-color: blue;
             border-radius: 50%;
-            background-color: #3498db;
-            transform: translate(-50%, -50%);
             cursor: pointer;
-            transition: transform 0.2s, background-color 0.2s;
         }
-        .clickable-point.correct { background-color: #2ecc71; }
-        .clickable-point.wrong { background-color: #e74c3c; }
     </style>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
     <h1>لعبة مدن ومحافظات فلسطين</h1>
-    <h3>⏳ الوقت: <span id="timer">30</span> ثانية | ✅ النقاط: <span id="score">0</span></h3>
-    <p id="question">أين تقع <span id="current-location"></span>؟</p>
-    <div class="map-container">
-        <img src="{{ url_for('static', filename='213.png') }}" class="map" id="map">
+    <p id="info">الوقت: <span id="timer">30</span> ثانية | النقاط: <span id="score">0</span></p>
+    <p id="question">أين تقع؟</p>
+    <div id="map-container">
+        <img src="213.png" id="map" width="400">
     </div>
+    <audio id="background-music" src="background-royalty-free-music-emotional-piano-305670.mp3" loop autoplay></audio>
+    <audio id="correct-sound" src="correct-6033.mp3"></audio>
+    <audio id="wrong-sound" src="wrong-47985.mp3"></audio>
+    
     <script>
-        let level = 1;
-        let score = 0;
-        let timeLeft = 30;
-        let askedQuestions = [];
-        let currentQuestion = {};
-
-        const cities = [
-            {"name": "حيفا", "x": 238, "y": 139},
-            {"name": "عكا", "x": 257, "y": 114},
-            {"name": "يافا", "x": 199, "y": 312},
-            {"name": "غزة", "x": 143, "y": 422},
-            {"name": "رفح", "x": 108, "y": 479}
-        ];
-
         const provinces = [
-            {"name": "جنين", "x": 302, "y": 206},
-            {"name": "نابلس", "x": 294, "y": 261},
-            {"name": "أريحا", "x": 326, "y": 349},
-            {"name": "رام الله", "x": 282, "y": 345},
-            {"name": "القدس", "x": 286, "y": 370}
+            { name: "حيفا", x: 238, y: 139 }, { name: "عكا", x: 257, y: 114 },
+            { name: "يافا", x: 199, y: 312 }, { name: "غزة", x: 143, y: 422 },
+            { name: "رفح", x: 108, y: 479 }, { name: "بئر السبع", x: 200, y: 489 },
+            { name: "صفد", x: 337, y: 100 }, { name: "طبريا", x: 343, y: 152 },
+            { name: "بيسان", x: 338, y: 201 }, { name: "الناصرة", x: 295, y: 161 }
         ];
+        
+        const cities = [
+            { name: "جنين", x: 302, y: 206 }, { name: "نابلس", x: 294, y: 261 },
+            { name: "أريحا", x: 326, y: 349 }, { name: "رام الله", x: 282, y: 345 },
+            { name: "القدس", x: 286, y: 370 }, { name: "بيت لحم", x: 281, y: 385 },
+            { name: "الخليل", x: 248, y: 425 }
+        ];
+
+        let stage = 1;
+        let questions = [...cities];
+        let score = 0;
+        let timer = 30;
+        let correctSound = document.getElementById("correct-sound");
+        let wrongSound = document.getElementById("wrong-sound");
+        let backgroundMusic = document.getElementById("background-music");
 
         function startGame() {
+            timer = 30;
+            document.getElementById("score").textContent = score;
+            document.getElementById("timer").textContent = timer;
+            nextQuestion();
             startTimer();
-            fetchQuestion();
-        }
-
-        function fetchQuestion() {
-            let questionsPool = level === 1 ? cities : provinces;
-            let remainingQuestions = questionsPool.filter(q => !askedQuestions.includes(q.name));
-
-            if (remainingQuestions.length === 0) return;
-            currentQuestion = remainingQuestions[Math.floor(Math.random() * remainingQuestions.length)];
-            askedQuestions.push(currentQuestion.name);
-            document.getElementById("current-location").innerText = currentQuestion.name;
-        }
-
-        function checkAnswer(user_x, user_y, point) {
-            const distance = Math.sqrt(Math.pow(user_x - currentQuestion.x, 2) + Math.pow(user_y - currentQuestion.y, 2));
-            if (distance < 20) {
-                score++;
-                document.getElementById("score").innerText = score;
-                point.classList.add("correct");
-            } else {
-                point.classList.add("wrong");
-            }
-            if (score === 5 && level === 1) {
-                level = 2;
-                score = 0;
-                askedQuestions = [];
-                document.getElementById("score").innerText = score;
-                timeLeft = 30;
-            }
-            fetchQuestion();
         }
 
         function startTimer() {
-            let timerInterval = setInterval(() => {
-                timeLeft--;
-                document.getElementById("timer").innerText = timeLeft;
-                if (timeLeft === 0) {
-                    clearInterval(timerInterval);
+            let countdown = setInterval(() => {
+                timer--;
+                document.getElementById("timer").textContent = timer;
+                if (timer <= 0) {
+                    clearInterval(countdown);
                     alert("انتهى الوقت!");
                     location.reload();
                 }
             }, 1000);
         }
 
-        function displayPoints() {
-            let points = cities.concat(provinces);
-            points.forEach(point => {
-                const clickablePoint = document.createElement("div");
-                clickablePoint.classList.add("clickable-point");
-                clickablePoint.style.left = `${point.x}px`;
-                clickablePoint.style.top = `${point.y}px`;
-                clickablePoint.addEventListener("click", () => checkAnswer(point.x, point.y, clickablePoint));
-                document.querySelector(".map-container").appendChild(clickablePoint);
+        function nextQuestion() {
+            if (questions.length === 0) {
+                if (stage === 1) {
+                    stage = 2;
+                    questions = [...provinces];
+                    score = 0;
+                    startGame();
+                } else {
+                    alert("لقد أنهيت اللعبة!");
+                    location.reload();
+                }
+                return;
+            }
+            let index = Math.floor(Math.random() * questions.length);
+            let question = questions[index];
+            questions.splice(index, 1);
+            document.getElementById("question").textContent = `أين تقع ${question.name}؟`;
+            generateMapDots(question);
+        }
+
+        function generateMapDots(question) {
+            let mapContainer = document.getElementById("map-container");
+            mapContainer.innerHTML = '<img src="213.png" id="map" width="400">';
+            [...provinces, ...cities].forEach(loc => {
+                let dot = document.createElement("div");
+                dot.className = "dot";
+                dot.style.left = `${loc.x / 2}px`;
+                dot.style.top = `${loc.y / 2}px`;
+                dot.onclick = () => checkAnswer(loc, question, dot);
+                mapContainer.appendChild(dot);
             });
         }
 
-        window.onload = function() {
-            displayPoints();
-            startGame();
+        function checkAnswer(selected, correct, dot) {
+            if (selected.name === correct.name) {
+                dot.style.backgroundColor = "green";
+                correctSound.play();
+                score++;
+            } else {
+                dot.style.backgroundColor = "red";
+                wrongSound.play();
+            }
+            document.getElementById("score").textContent = score;
+            setTimeout(() => {
+                dot.style.backgroundColor = "blue";
+                nextQuestion();
+            }, 1000);
         }
+
+        startGame();
     </script>
 </body>
 </html>
