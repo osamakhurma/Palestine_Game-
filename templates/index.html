@@ -5,34 +5,47 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>لعبة مدن ومحافظات فلسطين</title>
     <style>
-        body { text-align: center; font-family: Arial, sans-serif; direction: rtl; }
-        .map-container { position: relative; display: inline-block; }
-        .map { width: 486px; height: 900px; }
+        body {
+            text-align: center;
+            font-family: Arial, sans-serif;
+            direction: rtl;
+            background-color: #f0f0f0;
+        }
+        h1 {
+            color: #2c3e50;
+        }
+        .map-container {
+            position: relative;
+            display: inline-block;
+            margin-top: 20px;
+        }
+        .map {
+            width: 486px;
+            height: 900px;
+            border: 2px solid #2c3e50;
+            border-radius: 10px;
+        }
         .message-box {
             position: absolute;
-            top: 50%; left: 50%;
+            top: 50%;
+            left: 50%;
             transform: translate(-50%, -50%);
             padding: 20px;
-            background-color: rgba(0, 0, 0, 0.7);
+            background-color: rgba(0, 0, 0, 0.8);
             color: white;
             font-size: 20px;
             border-radius: 10px;
             display: none;
         }
-        .clickable-point {
-            position: absolute;
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            background-color: blue;
-            transform: translate(-50%, -50%);
-            cursor: pointer;
+        #timer, #score {
+            font-weight: bold;
+            color: #e74c3c;
         }
     </style>
 </head>
 <body>
     <h1>لعبة مدن ومحافظات فلسطين</h1>
-    <h3>⏳ الوقت: <span id="timer">60</span> ثانية | ✅ الأسئلة: <span id="score">0</span>/10</h3>
+    <h3>⏳ الوقت: <span id="timer">60</span> ثانية | ✅ النقاط: <span id="score">0</span></h3>
     <p id="question">أين تقع <span id="current-location"></span>؟</p>
 
     <div class="map-container">
@@ -41,53 +54,18 @@
     </div>
 
     <script>
-        const points = [
-            {"name": "حيفا", "x": 238, "y": 139},
-            {"name": "عكا", "x": 257, "y": 114},
-            {"name": "يافا", "x": 199, "y": 312},
-            {"name": "غزة", "x": 143, "y": 422},
-            {"name": "رفح", "x": 108, "y": 479},
-            {"name": "بئر السبع", "x": 200, "y": 489},
-            {"name": "صفد", "x": 337, "y": 100},
-            {"name": "طبريا", "x": 343, "y": 152},
-            {"name": "بيسان", "x": 338, "y": 201},
-            {"name": "الناصرة", "x": 295, "y": 161},
-            {"name": "جنين", "x": 302, "y": 206},
-            {"name": "نابلس", "x": 294, "y": 261},
-            {"name": "أريحا", "x": 326, "y": 349},
-            {"name": "رام الله", "x": 282, "y": 345},
-            {"name": "القدس", "x": 286, "y": 370},
-            {"name": "بيت لحم", "x": 281, "y": 385},
-            {"name": "الخليل", "x": 248, "y": 425}
-        ];
-
         let level = 1; 
-        let score = 0;
-        let timeLeft = 60;
+        let score = 0;  // النقاط تتراكم من المرحلة الأولى إلى الثانية
+        let timeLeft = 60;  // وقت إجمالي للمرحلتين
         let currentQuestion = {};
 
+        // بدء اللعبة
         function startGame() {
-            displayAllPoints();  // عرض جميع النقاط من البداية
-            fetchQuestion();
-            startTimer();
+            fetchQuestion();  // احصل على السؤال الأول
+            startTimer();     // ابدأ العد التنازلي
         }
 
-        function displayAllPoints() {
-            points.forEach(point => {
-                addClickablePoint(point.x, point.y);
-            });
-        }
-
-        // إضافة النقطة القابلة للنقر على الخريطة
-        function addClickablePoint(x, y) {
-            const clickablePoint = document.createElement("div");
-            clickablePoint.classList.add("clickable-point");
-            clickablePoint.style.left = `${x}px`;
-            clickablePoint.style.top = `${y}px`;
-            clickablePoint.addEventListener("click", () => checkAnswer(x, y));
-            document.querySelector(".map-container").appendChild(clickablePoint);
-        }
-
+        // جلب سؤال جديد من الخادم
         function fetchQuestion() {
             fetch(`/get_question`)
                 .then(response => response.json())
@@ -97,30 +75,27 @@
                 });
         }
 
+        // التحقق من الإجابة
         function checkAnswer(user_x, user_y) {
-            // حساب المسافة بين النقطة التي نقر عليها والإجابة الصحيحة
             const distance = Math.sqrt(Math.pow(user_x - currentQuestion.x, 2) + Math.pow(user_y - currentQuestion.y, 2));
 
-            // إذا كانت الإجابة صحيحة أو خاطئة، نغير السؤال
-            fetchQuestion();
-
             if (distance < 20) { 
-                score++;
-                document.getElementById("score").innerText = `${score}/10`;
+                score++;  // زيادة النقاط
+                document.getElementById("score").innerText = `${score}`;  // تحديث النقاط
 
-                if (score === 10) {
-                    if (level === 1) {
-                        level = 2;
-                        score = 0;
-                        alert("🎉 مبروك! انتقلت إلى المرحلة الثانية (مدن فلسطين)");
-                    } else {
-                        alert("🎉 تهانينا! أكملت اللعبة بنجاح!");
-                        location.reload();
-                    }
+                if (level === 1 && score === 5) {  // إذا أجاب على 5 أسئلة في المرحلة الأولى
+                    level = 2;  // الانتقال إلى المرحلة الثانية
+                    alert("🎉 مبروك! انتقلت إلى مرحلة المدن.");
+                } else if (level === 2 && score === 10) {  // إذا أجاب على 10 أسئلة في المجموع
+                    alert("🎉 تهانينا! أكملت اللعبة بنجاح!");
+                    location.reload();  // إعادة تحميل الصفحة
                 }
+
+                fetchQuestion();  // احصل على سؤال جديد
             }
         }
 
+        // بدء العد التنازلي
         function startTimer() {
             let timerInterval = setInterval(() => {
                 timeLeft--;
@@ -134,6 +109,15 @@
             }, 1000);
         }
 
+        // النقر على الخريطة
+        document.getElementById("map").addEventListener("click", (event) => {
+            const rect = event.target.getBoundingClientRect();
+            const user_x = event.clientX - rect.left;  // إحداثيات النقرة (X)
+            const user_y = event.clientY - rect.top;   // إحداثيات النقرة (Y)
+            checkAnswer(user_x, user_y);  // التحقق من الإجابة
+        });
+
+        // بدء اللعبة عند تحميل الصفحة
         window.onload = startGame;
     </script>
 </body>
