@@ -41,6 +41,15 @@
             font-weight: bold;
             color: #e74c3c;
         }
+        .clickable-point {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background-color: blue;
+            transform: translate(-50%, -50%);
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
@@ -59,10 +68,32 @@
         let timeLeft = 60;  // وقت إجمالي للمرحلتين
         let currentQuestion = {};
 
+        // النقاط على الخريطة
+        const points = [
+            {"name": "حيفا", "x": 238, "y": 139},
+            {"name": "عكا", "x": 257, "y": 114},
+            {"name": "يافا", "x": 199, "y": 312},
+            {"name": "غزة", "x": 143, "y": 422},
+            {"name": "رفح", "x": 108, "y": 479},
+            {"name": "بئر السبع", "x": 200, "y": 489},
+            {"name": "صفد", "x": 337, "y": 100},
+            {"name": "طبريا", "x": 343, "y": 152},
+            {"name": "بيسان", "x": 338, "y": 201},
+            {"name": "الناصرة", "x": 295, "y": 161},
+            {"name": "جنين", "x": 302, "y": 206},
+            {"name": "نابلس", "x": 294, "y": 261},
+            {"name": "أريحا", "x": 326, "y": 349},
+            {"name": "رام الله", "x": 282, "y": 345},
+            {"name": "القدس", "x": 286, "y": 370},
+            {"name": "بيت لحم", "x": 281, "y": 385},
+            {"name": "الخليل", "x": 248, "y": 425}
+        ];
+
         // بدء اللعبة
         function startGame() {
-            fetchQuestion();  // احصل على السؤال الأول
-            startTimer();     // ابدأ العد التنازلي
+            displayAllPoints();  // عرض النقاط الزرقاء
+            fetchQuestion();    // احصل على السؤال الأول
+            startTimer();       // ابدأ العد التنازلي
         }
 
         // جلب سؤال جديد من الخادم
@@ -111,13 +142,17 @@
             }, 1000);
         }
 
-        // النقر على الخريطة
-        document.getElementById("map").addEventListener("click", (event) => {
-            const rect = event.target.getBoundingClientRect();
-            const user_x = event.clientX - rect.left;  // إحداثيات النقرة (X)
-            const user_y = event.clientY - rect.top;   // إحداثيات النقرة (Y)
-            checkAnswer(user_x, user_y);  // التحقق من الإجابة
-        });
+        // عرض النقاط الزرقاء على الخريطة
+        function displayAllPoints() {
+            points.forEach(point => {
+                const clickablePoint = document.createElement("div");
+                clickablePoint.classList.add("clickable-point");
+                clickablePoint.style.left = `${point.x}px`;
+                clickablePoint.style.top = `${point.y}px`;
+                clickablePoint.addEventListener("click", () => checkAnswer(point.x, point.y));
+                document.querySelector(".map-container").appendChild(clickablePoint);
+            });
+        }
 
         // بدء اللعبة عند تحميل الصفحة
         window.onload = startGame;
