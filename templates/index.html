@@ -72,76 +72,48 @@
         <div id="message-box" class="message-box"></div>
     </div>
 
-    <!-- عناصر صوتية -->
     <audio id="correct-sound" src="{{ url_for('static', filename='correct-6033.mp3') }}"></audio>
     <audio id="wrong-sound" src="{{ url_for('static', filename='wrong-47985.mp3') }}"></audio>
-    <audio id="background-music" src="{{ url_for('static', filename='background-royalty-free-music-emotional-piano-305670.mp3') }}" loop autoplay></audio>
+    <audio id="background-music" src="{{ url_for('static', filename='background-royalty-free-music-emotional-piano-305670.mp3') }}" loop></audio>
 
     <script>
         let level = 1;
         let score = 0;
         let timeLeft = 30;
         let currentQuestion = {};
-        let usedQuestions = [];
+        let usedQuestions = new Set();
 
-        const cities = [
-            {"name": "جنين", "x": 302, "y": 206},
-            {"name": "نابلس", "x": 294, "y": 261},
-            {"name": "أريحا", "x": 326, "y": 349},
-            {"name": "رام الله", "x": 282, "y": 345},
-            {"name": "القدس", "x": 286, "y": 370},
-            {"name": "بيت لحم", "x": 281, "y": 385},
-            {"name": "الخليل", "x": 248, "y": 425}
-        ];
+        const provinces = [...];
+        const cities = [...];
 
-        const provinces = [
-            {"name": "حيفا", "x": 238, "y": 139},
-            {"name": "عكا", "x": 257, "y": 114},
-            {"name": "يافا", "x": 199, "y": 312},
-            {"name": "غزة", "x": 143, "y": 422},
-            {"name": "رفح", "x": 108, "y": 479},
-            {"name": "بئر السبع", "x": 200, "y": 489},
-            {"name": "صفد", "x": 337, "y": 100},
-            {"name": "طبريا", "x": 343, "y": 152},
-            {"name": "بيسان", "x": 338, "y": 201},
-            {"name": "الناصرة", "x": 295, "y": 161}
-        ];
-
-        let points = cities;
-        
         function startGame() {
             displayAllPoints();
             fetchQuestion();
             startTimer();
+            playBackgroundMusic();
         }
 
         function fetchQuestion() {
-            if (usedQuestions.length === 5) {
-                if (level === 1) {
-                    level = 2;
-                    points = provinces;
-                    usedQuestions = [];
-                    score = 0;
-                } else {
-                    showMessage("🎉 تهانينا! أكملت اللعبة بنجاح!", "#3498db");
-                    return;
-                }
-            }
-            currentQuestion = points.find(q => !usedQuestions.includes(q.name));
-            usedQuestions.push(currentQuestion.name);
+            let availableQuestions = (level === 1 ? cities : provinces).filter(q => !usedQuestions.has(q.name));
+            if (availableQuestions.length === 0) return;
+            currentQuestion = availableQuestions[Math.floor(Math.random() * availableQuestions.length)];
+            usedQuestions.add(currentQuestion.name);
             document.getElementById("current-location").innerText = currentQuestion.name;
         }
 
-        function checkAnswer(user_x, user_y, point) {
+        function checkAnswer(user_x, user_y, element) {
             const distance = Math.sqrt(Math.pow(user_x - currentQuestion.x, 2) + Math.pow(user_y - currentQuestion.y, 2));
             if (distance < 20) {
                 score++;
                 document.getElementById("score").innerText = `${score}`;
-                point.style.backgroundColor = "green";
+                showMessage("🎉 أحسنت! إجابة صحيحة", "#2ecc71");
                 playSound("correct-sound");
+                element.style.backgroundColor = "green";
+                if (score % 5 === 0) level++;
             } else {
-                point.style.backgroundColor = "red";
+                showMessage("❌ حاول مرة أخرى!", "#e74c3c");
                 playSound("wrong-sound");
+                element.style.backgroundColor = "red";
             }
             fetchQuestion();
         }
@@ -153,19 +125,37 @@
                 if (timeLeft === 0) {
                     clearInterval(timerInterval);
                     showMessage("⏳ انتهى الوقت! حاول مجددًا.", "#e74c3c");
+                    setTimeout(() => location.reload(), 3000);
                 }
             }, 1000);
         }
 
         function displayAllPoints() {
+            let points = [...cities, ...provinces];
             points.forEach(point => {
-                const el = document.createElement("div");
-                el.classList.add("clickable-point");
-                el.style.left = `${point.x}px`;
-                el.style.top = `${point.y}px`;
-                el.addEventListener("click", () => checkAnswer(point.x, point.y, el));
-                document.querySelector(".map-container").appendChild(el);
+                const clickablePoint = document.createElement("div");
+                clickablePoint.classList.add("clickable-point");
+                clickablePoint.style.left = `${point.x}px`;
+                clickablePoint.style.top = `${point.y}px`;
+                clickablePoint.addEventListener("click", () => checkAnswer(point.x, point.y, clickablePoint));
+                document.querySelector(".map-container").appendChild(clickablePoint);
             });
+        }
+
+        function playBackgroundMusic() {
+            document.getElementById("background-music").play();
+        }
+
+        function playSound(soundId) {
+            document.getElementById(soundId).play();
+        }
+
+        function showMessage(message, color) {
+            const messageBox = document.getElementById("message-box");
+            messageBox.innerText = message;
+            messageBox.style.backgroundColor = color;
+            messageBox.style.display = "block";
+            setTimeout(() => messageBox.style.display = "none", 2000);
         }
 
         window.onload = startGame;
