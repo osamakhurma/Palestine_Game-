@@ -65,7 +65,7 @@
 <body>
     <h1>لعبة مدن ومحافظات فلسطين</h1>
     <h3>⏳ الوقت: <span id="timer">30</span> ثانية | ✅ النقاط: <span id="score">0</span></h3>
-    <p id="question">أين تقع <span id="current-location"></span>؟</p>
+    <p id="question">أين تقع <span id="current-location">؟</span></p>
 
     <div class="map-container">
         <img src="{{ url_for('static', filename='213.png') }}" class="map" id="map">
@@ -83,8 +83,16 @@
         let currentQuestion = {};
         let usedQuestions = new Set();
 
-        const provinces = [...];
-        const cities = [...];
+        const cities = [
+            { name: "القدس", x: 282, y: 368 },
+            { name: "الخليل", x: 249, y: 428 },
+            { name: "نابلس", x: 293, y: 259 }
+        ];
+        
+        const provinces = [
+            { name: "الضفة الغربية", x: 250, y: 350 },
+            { name: "قطاع غزة", x: 180, y: 500 }
+        ];
 
         function startGame() {
             displayAllPoints();
