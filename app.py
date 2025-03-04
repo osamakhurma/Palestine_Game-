@@ -72,7 +72,7 @@ def submit_answer():
     if distance < 20:
         score += 1
     
-    if score == 10 and current_stage == "provinces":
+    if score == 5 and current_stage == "provinces":
         current_stage = "cities"
         score = 0
         return jsonify({"message": "مبروك! انتقلت إلى مرحلة المدن."})
