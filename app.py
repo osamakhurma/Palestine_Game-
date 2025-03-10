@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, jsonify
 import random
 import os
+from PIL import Image  # للتأكد من أبعاد الصورة
 
 app = Flask(__name__, static_folder='.')
 
@@ -32,6 +33,21 @@ cities = [
 current_stage = "provinces"  # أولًا المحافظات
 score = 0
 questions = []
+
+# دالة للتحقق من أبعاد الصورة
+def check_image_dimensions(image_path, expected_width, expected_height):
+    try:
+        with Image.open(image_path) as img:
+            width, height = img.size
+            if width != expected_width or height != expected_height:
+                print(f"تحذير: أبعاد الصورة غير صحيحة! المتوقع: {expected_width}x{expected_height}, الفعلي: {width}x{height}")
+            else:
+                print("أبعاد الصورة صحيحة.")
+    except Exception as e:
+        print(f"خطأ في فتح الصورة: {e}")
+
+# تحقق من أبعاد الصورة عند بدء التشغيل
+check_image_dimensions("213.png", 486, 900)
 
 @app.route('/')
 def index():
