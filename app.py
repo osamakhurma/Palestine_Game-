@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, jsonify
 import random
 import os
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='.')
 
 # البيانات الخاصة بالمحافظات والمدن (مخزنة محليًا)
 provinces = [
