@@ -72,10 +72,6 @@
         <div id="message-box" class="message-box"></div>
     </div>
 
-    <audio id="correct-sound" src="{{ url_for('static', filename='correct-6033.mp3') }}"></audio>
-    <audio id="wrong-sound" src="{{ url_for('static', filename='wrong-47985.mp3') }}"></audio>
-    <audio id="background-music" src="{{ url_for('static', filename='background-royalty-free-music-emotional-piano-305670.mp3') }}" loop></audio>
-
     <script>
         let level = 1;
         let score = 0;
@@ -110,7 +106,6 @@
             displayAllPoints();
             fetchQuestion();
             startTimer();
-            playBackgroundMusic();
         }
 
         function fetchQuestion() {
@@ -130,7 +125,6 @@
                 score++;
                 document.getElementById("score").innerText = `${score}`;
                 showMessage("🎉 أحسنت! إجابة صحيحة", "#2ecc71");
-                playSound("correct-sound");
                 element.style.backgroundColor = "green";
                 if (score === 5 && level === 1) {
                     level++;
@@ -141,7 +135,6 @@
                 }
             } else {
                 showMessage("❌ حاول مرة أخرى!", "#e74c3c");
-                playSound("wrong-sound");
                 element.style.backgroundColor = "red";
             }
             fetchQuestion();
@@ -169,14 +162,6 @@
                 clickablePoint.addEventListener("click", () => checkAnswer(point.x, point.y, clickablePoint));
                 document.querySelector(".map-container").appendChild(clickablePoint);
             });
-        }
-
-        function playBackgroundMusic() {
-            document.getElementById("background-music").play();
-        }
-
-        function playSound(soundId) {
-            document.getElementById(soundId).play();
         }
 
         function showMessage(message, color) {
