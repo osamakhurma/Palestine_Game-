@@ -114,8 +114,11 @@
         }
 
         function fetchQuestion() {
-            let availableQuestions = (level === 1 ? cities : provinces).filter(q => !usedQuestions.has(q.name));
-            if (availableQuestions.length === 0) return;
+            let availableQuestions = (level === 1 ? provinces : cities).filter(q => !usedQuestions.has(q.name));
+            if (availableQuestions.length === 0) {
+                showMessage("🎉 لقد أنهيت جميع الأسئلة!", "#2ecc71");
+                return;
+            }
             currentQuestion = availableQuestions[Math.floor(Math.random() * availableQuestions.length)];
             usedQuestions.add(currentQuestion.name);
             document.getElementById("current-location").innerText = currentQuestion.name;
@@ -129,7 +132,13 @@
                 showMessage("🎉 أحسنت! إجابة صحيحة", "#2ecc71");
                 playSound("correct-sound");
                 element.style.backgroundColor = "green";
-                if (score % 5 === 0) level++;
+                if (score === 5 && level === 1) {
+                    level++;
+                    score = 0;
+                    timeLeft = 30;
+                    showMessage("🎉 انتقلت إلى مرحلة المدن!", "#2ecc71");
+                    fetchQuestion();
+                }
             } else {
                 showMessage("❌ حاول مرة أخرى!", "#e74c3c");
                 playSound("wrong-sound");
@@ -151,7 +160,7 @@
         }
 
         function displayAllPoints() {
-            let points = [...cities, ...provinces];
+            let points = level === 1 ? provinces : cities;
             points.forEach(point => {
                 const clickablePoint = document.createElement("div");
                 clickablePoint.classList.add("clickable-point");
